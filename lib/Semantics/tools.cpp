@@ -17,9 +17,9 @@
 #include "flang/Semantics/symbol.h"
 #include "flang/Semantics/tools.h"
 #include "flang/Semantics/type.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <set>
-#include <sstream>
 #include <variant>
 
 namespace Fortran::semantics {
@@ -414,7 +414,8 @@ bool ExprTypeKindIsDefault(
 // If an analyzed expr or assignment is missing, dump the node and die.
 template<typename T> static void CheckMissingAnalysis(bool absent, const T &x) {
   if (absent) {
-    std::ostringstream ss;
+    std::string buf;
+    llvm::raw_string_ostream ss{buf};
     ss << "node has not been analyzed:\n";
     parser::DumpTree(ss, x);
     common::die(ss.str().c_str());
@@ -607,8 +608,7 @@ bool IsOrContainsEventOrLockComponent(const Symbol &symbol) {
 
 bool IsSaved(const Symbol &symbol) {
   auto scopeKind{symbol.owner().kind()};
-  if (scopeKind == Scope::Kind::MainProgram ||
-      scopeKind == Scope::Kind::Module) {
+  if (scopeKind == Scope::Kind::Module || scopeKind == Scope::Kind::BlockData) {
     return true;
   } else if (scopeKind == Scope::Kind::DerivedType) {
     return false;  // this is a component
